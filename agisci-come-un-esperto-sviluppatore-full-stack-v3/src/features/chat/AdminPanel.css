@@ -60,7 +60,8 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   padding: 12px 16px;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
@@ -70,9 +71,16 @@
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: #667eea;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .submit-button {
@@ -139,15 +147,49 @@
 }
 
 .member-count {
-  font-size: 14px;
-  color: #667eea;
+  font-size: 13px;
+  color: #999;
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge.status-planning {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.status-in_progress {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.status-suspended {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.status-badge.status-completed {
+  background: #e8f5e9;
+  color: #388e3c;
 }
 
 .project-description {
-  margin: 0 0 16px 0;
+  margin: 0 0 12px 0;
   color: #666;
   line-height: 1.5;
+}
+
+.project-address {
+  margin: 0 0 16px 0;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .project-meta {
@@ -166,4 +208,41 @@
 .admin-stats {
   padding: 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  font-size: 36px;
+}
+
+.stat-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+}

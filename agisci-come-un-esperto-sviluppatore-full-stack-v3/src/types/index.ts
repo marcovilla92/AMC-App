@@ -14,6 +14,14 @@ export interface Project {
   createdBy: string;
   members: string[];
   createdAt: string;
+  address?: string;
+  status: 'planning' | 'in_progress' | 'completed' | 'suspended';
+  startDate?: string;
+  endDate?: string;
+  location?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface Message {

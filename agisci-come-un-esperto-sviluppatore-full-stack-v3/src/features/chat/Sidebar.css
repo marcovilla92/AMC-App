@@ -162,6 +162,17 @@
   text-overflow: ellipsis;
 }
 
+.project-info .project-address {
+  margin: 2px 0;
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 500;
+}
+
+.project-info .project-description {
+  margin-top: 4px;
+}
+
 .project-item.active .project-info p {
   opacity: 0.9;
 }

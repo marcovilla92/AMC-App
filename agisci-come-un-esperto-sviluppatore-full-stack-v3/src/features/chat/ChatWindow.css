@@ -13,13 +13,55 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .project-header-info h2 {
-  margin: 0 0 4px 0;
+  margin: 0;
   font-size: 20px;
   color: #333;
 }
 
-.project-header-info p {
+.project-status {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.project-status.status-planning {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.project-status.status-in_progress {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.project-status.status-suspended {
+  background: #fce4ec;
+  color: #c2185b;
+}
+
+.project-status.status-completed {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.project-address-header {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.project-desc {
   margin: 0;
   font-size: 14px;
   color: #666;

@@ -7,6 +7,7 @@ import ChatWindow from './ChatWindow';
 import MediaGallery from './MediaGallery';
 import AdminPanel from './AdminPanel';
 import { persistence } from '../../utils/persistence';
+import { initializeDemoData } from '../../data/demoData';
 
 interface ChatContainerProps {
   user: User;
@@ -20,8 +21,14 @@ function ChatContainer({ user, onLogout }: ChatContainerProps) {
   const [view, setView] = useState<'chat' | 'media' | 'admin'>('chat');
 
   useEffect(() => {
-    loadProjects();
+    initializeApp();
   }, []);
+
+  const initializeApp = async () => {
+    // Initialize demo data if needed
+    await initializeDemoData(persistence);
+    loadProjects();
+  };
 
   useEffect(() => {
     if (selectedProject) {
@@ -78,7 +85,14 @@ function ChatContainer({ user, onLogout }: ChatContainerProps) {
     setMessages(prev => [...prev, newMessage]);
   };
 
-  const handleCreateProject = async (name: string, description: string, memberIds: string[]) => {
+  const handleCreateProject = async (
+    name: string,
+    description: string,
+    memberIds: string[],
+    address?: string,
+    status: Project['status'] = 'planning',
+    startDate?: string
+  ) => {
     const newProject: Project = {
       id: Date.now().toString(),
       name,
@@ -86,6 +100,9 @@ function ChatContainer({ user, onLogout }: ChatContainerProps) {
       createdBy: user.id,
       members: [user.id, ...memberIds],
       createdAt: new Date().toISOString(),
+      address,
+      status,
+      startDate,
     };
 
     const projectsJson = await persistence.getItem('projects');

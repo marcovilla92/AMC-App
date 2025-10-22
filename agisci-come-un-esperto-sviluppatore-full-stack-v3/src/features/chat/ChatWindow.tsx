@@ -52,12 +52,30 @@ function ChatWindow({ project, messages, currentUser, onSendMessage }: ChatWindo
     return date.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const getStatusLabel = (status: Project['status']) => {
+    switch (status) {
+      case 'planning': return '📋 In Pianificazione';
+      case 'in_progress': return '🚧 In Corso';
+      case 'suspended': return '⏸️ Sospeso';
+      case 'completed': return '✅ Completato';
+      default: return status;
+    }
+  };
+
   return (
     <div className="chat-window">
       <div className="chat-header">
         <div className="project-header-info">
-          <h2>{project.name}</h2>
-          <p>{project.description}</p>
+          <div className="header-title">
+            <h2>{project.name}</h2>
+            <span className={`project-status status-${project.status}`}>
+              {getStatusLabel(project.status)}
+            </span>
+          </div>
+          {project.address && (
+            <p className="project-address-header">📍 {project.address}</p>
+          )}
+          <p className="project-desc">{project.description}</p>
         </div>
       </div>
 

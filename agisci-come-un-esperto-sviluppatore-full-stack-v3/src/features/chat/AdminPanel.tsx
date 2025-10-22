@@ -5,20 +5,40 @@ import { Project } from '../../types';
 
 interface AdminPanelProps {
   projects: Project[];
-  onCreateProject: (name: string, description: string, memberIds: string[]) => void;
+  onCreateProject: (
+    name: string,
+    description: string,
+    memberIds: string[],
+    address?: string,
+    status?: Project['status'],
+    startDate?: string
+  ) => void;
 }
 
 function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [projectAddress, setProjectAddress] = useState('');
+  const [projectStatus, setProjectStatus] = useState<Project['status']>('planning');
+  const [projectStartDate, setProjectStartDate] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (projectName.trim() && projectDescription.trim()) {
-      onCreateProject(projectName.trim(), projectDescription.trim(), []);
+      onCreateProject(
+        projectName.trim(),
+        projectDescription.trim(),
+        [],
+        projectAddress.trim() || undefined,
+        projectStatus,
+        projectStartDate || undefined
+      );
       setProjectName('');
       setProjectDescription('');
+      setProjectAddress('');
+      setProjectStatus('planning');
+      setProjectStartDate('');
       setIsCreating(false);
     }
   };
@@ -47,12 +67,12 @@ function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
       {isCreating && (
         <form className="create-project-form" onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Nome Progetto</label>
+            <label>Nome Cantiere</label>
             <input
               type="text"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
-              placeholder="Es. Sviluppo App Mobile"
+              placeholder="Es. Cantiere Via Roma 45"
               required
             />
           </div>
@@ -66,6 +86,40 @@ function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
               rows={3}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label>Indirizzo Cantiere</label>
+            <input
+              type="text"
+              value={projectAddress}
+              onChange={(e) => setProjectAddress(e.target.value)}
+              placeholder="Es. Via Roma 45, Milano"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Stato</label>
+              <select
+                value={projectStatus}
+                onChange={(e) => setProjectStatus(e.target.value as Project['status'])}
+              >
+                <option value="planning">In Pianificazione</option>
+                <option value="in_progress">In Corso</option>
+                <option value="suspended">Sospeso</option>
+                <option value="completed">Completato</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Data Inizio</label>
+              <input
+                type="date"
+                value={projectStartDate}
+                onChange={(e) => setProjectStartDate(e.target.value)}
+              />
+            </div>
           </div>
 
           <button type="submit" className="submit-button">
@@ -83,24 +137,45 @@ function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
           </div>
         ) : (
           <div className="projects-table">
-            {projects.map(project => (
-              <div key={project.id} className="project-card">
-                <div className="project-card-header">
-                  <h4>{project.name}</h4>
-                  <span className="member-count">
-                    👥 {project.members.length} membri
-                  </span>
-                </div>
+            {projects.map(project => {
+              const getStatusLabel = (status: Project['status']) => {
+                switch (status) {
+                  case 'planning': return '📋 In Pianificazione';
+                  case 'in_progress': return '🚧 In Corso';
+                  case 'suspended': return '⏸️ Sospeso';
+                  case 'completed': return '✅ Completato';
+                  default: return status;
+                }
+              };
 
-                <p className="project-description">{project.description}</p>
+              return (
+                <div key={project.id} className="project-card">
+                  <div className="project-card-header">
+                    <h4>{project.name}</h4>
+                    <span className={`status-badge status-${project.status}`}>
+                      {getStatusLabel(project.status)}
+                    </span>
+                  </div>
 
-                <div className="project-meta">
-                  <span className="project-date">
-                    📅 Creato il {formatDate(project.createdAt)}
-                  </span>
+                  <p className="project-description">{project.description}</p>
+
+                  {project.address && (
+                    <div className="project-address">
+                      📍 {project.address}
+                    </div>
+                  )}
+
+                  <div className="project-meta">
+                    <span className="project-date">
+                      📅 Creato il {formatDate(project.createdAt)}
+                    </span>
+                    <span className="member-count">
+                      👥 {project.members.length} membri
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

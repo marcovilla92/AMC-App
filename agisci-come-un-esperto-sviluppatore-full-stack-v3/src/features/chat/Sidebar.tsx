@@ -65,27 +65,42 @@ function Sidebar({
       </div>
 
       <div className="projects-list">
-        <h4>Progetti</h4>
+        <h4>Cantieri</h4>
         {projects.length === 0 ? (
           <div className="no-projects">
-            <p>Nessun progetto disponibile</p>
+            <p>Nessun cantiere disponibile</p>
           </div>
         ) : (
-          projects.map(project => (
-            <div
-              key={project.id}
-              className={`project-item ${
-                selectedProject?.id === project.id ? 'active' : ''
-              }`}
-              onClick={() => onSelectProject(project)}
-            >
-              <div className="project-icon">📊</div>
-              <div className="project-info">
-                <h5>{project.name}</h5>
-                <p>{project.description}</p>
+          projects.map(project => {
+            const getStatusIcon = (status: Project['status']) => {
+              switch (status) {
+                case 'planning': return '📋';
+                case 'in_progress': return '🚧';
+                case 'suspended': return '⏸️';
+                case 'completed': return '✅';
+                default: return '📊';
+              }
+            };
+
+            return (
+              <div
+                key={project.id}
+                className={`project-item ${
+                  selectedProject?.id === project.id ? 'active' : ''
+                }`}
+                onClick={() => onSelectProject(project)}
+              >
+                <div className="project-icon">{getStatusIcon(project.status)}</div>
+                <div className="project-info">
+                  <h5>{project.name}</h5>
+                  {project.address && (
+                    <p className="project-address">📍 {project.address}</p>
+                  )}
+                  <p className="project-description">{project.description}</p>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
