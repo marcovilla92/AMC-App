@@ -1,185 +1,213 @@
 
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Building2, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import './Login.css';
-import { User, Project, Message } from '../../types';
+import { User } from '../../types';
+import { authenticateUser } from '../../services/supabaseService';
+import { initializeDemoData } from '../../data/demoData';
 import { persistence } from '../../utils/persistence';
 
 interface LoginProps {
   onLogin: (user: User) => void;
 }
 
-async function initializeMockData() {
-  const projectsJson = await persistence.getItem('projects');
-  if (!projectsJson) {
-    const mockProjects: Project[] = [
-      {
-        id: 'proj-1',
-        name: 'Sviluppo App Mobile',
-        description: 'Progetto per lo sviluppo della nuova app mobile aziendale',
-        createdBy: 'admin-1',
-        members: ['admin-1', 'user-1'],
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 'proj-2',
-        name: 'Marketing Campaign',
-        description: 'Campagna marketing Q1 2024',
-        createdBy: 'admin-1',
-        members: ['admin-1', 'user-1'],
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    await persistence.setItem('projects', JSON.stringify(mockProjects));
-  }
-
-  const messagesJson = await persistence.getItem('messages');
-  if (!messagesJson) {
-    const mockMessages: Message[] = [
-      {
-        id: 'msg-1',
-        projectId: 'proj-1',
-        senderId: 'admin-1',
-        senderName: 'Admin',
-        content: 'Benvenuti nel progetto!',
-        type: 'text',
-        createdAt: new Date().toISOString(),
-        readBy: ['admin-1'],
-      },
-      {
-        id: 'msg-2',
-        projectId: 'proj-1',
-        senderId: 'user-1',
-        senderName: 'Mario Rossi',
-        content: 'Grazie! Pronto a iniziare.',
-        type: 'text',
-        createdAt: new Date().toISOString(),
-        readBy: ['user-1'],
-      },
-    ];
-    await persistence.setItem('messages', JSON.stringify(mockMessages));
-  }
-}
-
 function Login({ onLogin }: LoginProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (!email || !password) {
-      setError('Inserisci email e password');
-      return;
-    }
+    try {
+      if (!email || !password) {
+        setError('Inserisci email e password');
+        return;
+      }
 
-    if (isSignUp && !name) {
-      setError('Inserisci il tuo nome');
-      return;
-    }
+      // Initialize demo data if needed
+      await initializeDemoData(persistence);
 
-    // Initialize mock data if needed
-    await initializeMockData();
+      // Authenticate with Supabase service (falls back to demo if not configured)
+      const user = await authenticateUser(email, password);
 
-    if (isSignUp) {
-      // Simulate signup
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        name,
-        role: 'user',
-      };
-      onLogin(newUser);
-    } else {
-      // Demo login - admin credentials
-      if (email === 'admin@company.com' && password === 'admin123') {
-        onLogin({
-          id: 'admin-1',
-          email: 'admin@company.com',
-          name: 'Admin',
-          role: 'admin',
-        });
-      } else if (email === 'user@company.com' && password === 'user123') {
-        onLogin({
-          id: 'user-1',
-          email: 'user@company.com',
-          name: 'Mario Rossi',
-          role: 'user',
-        });
+      if (user) {
+        onLogin(user);
       } else {
         setError('Credenziali non valide');
       }
+    } catch (err: any) {
+      setError(err.message || 'Errore durante il login');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fillDemoCredentials = (type: 'admin' | 'user') => {
+    if (type === 'admin') {
+      setEmail('admin@amc.com');
+      setPassword('admin123');
+    } else {
+      setEmail('user@amc.com');
+      setPassword('user123');
     }
   };
 
   return (
     <div className="login-container">
-      <div className="login-card">
-        <div className="login-header">
-          <h1>💼 Company Chat</h1>
-          <p>App di messaggistica aziendale</p>
-        </div>
+      {/* Animated background */}
+      <div className="login-background">
+        <motion.div
+          className="gradient-orb orb-1"
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+        <motion.div
+          className="gradient-orb orb-2"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, -30, 0],
+            y: [0, 50, 0],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: 'easeInOut',
+          }}
+        />
+      </div>
+
+      <motion.div
+        className="login-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Logo and Header */}
+        <motion.div
+          className="login-header"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="logo-container">
+            <Building2 size={48} className="logo-icon" />
+          </div>
+          <h1>AMC Cantieri</h1>
+          <p>Gestione Cantieri Edili in Tempo Reale</p>
+        </motion.div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {isSignUp && (
-            <div className="form-group">
-              <label>Nome</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Il tuo nome"
-              />
-            </div>
-          )}
-
-          <div className="form-group">
-            <label>Email</label>
+          <motion.div
+            className="input-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Mail className="input-icon" size={20} />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="email@company.com"
+              placeholder="Email"
+              disabled={isLoading}
+              required
             />
-          </div>
+          </motion.div>
 
-          <div className="form-group">
-            <label>Password</label>
+          <motion.div
+            className="input-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Lock className="input-icon" size={20} />
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Password"
+              disabled={isLoading}
+              required
             />
-          </div>
+          </motion.div>
 
-          {error && <div className="error-message">{error}</div>}
+          {error && (
+            <motion.div
+              className="error-message"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+            >
+              {error}
+            </motion.div>
+          )}
 
-          <button type="submit" className="login-button">
-            {isSignUp ? 'Registrati' : 'Accedi'}
-          </button>
+          <motion.button
+            type="submit"
+            className="login-button"
+            disabled={isLoading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="spinner" size={20} />
+                Accesso in corso...
+              </>
+            ) : (
+              'Accedi'
+            )}
+          </motion.button>
         </form>
 
-        <div className="login-footer">
-          <button
-            className="toggle-button"
-            onClick={() => setIsSignUp(!isSignUp)}
-          >
-            {isSignUp
-              ? 'Hai già un account? Accedi'
-              : 'Non hai un account? Registrati'}
-          </button>
-        </div>
-
-        <div className="demo-credentials">
-          <p><strong>Demo Credentials:</strong></p>
-          <p>Admin: admin@company.com / admin123</p>
-          <p>User: user@company.com / user123</p>
-        </div>
-      </div>
+        <motion.div
+          className="demo-section"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <div className="demo-divider">
+            <span>Prova Demo</span>
+          </div>
+          <div className="demo-buttons">
+            <motion.button
+              onClick={() => fillDemoCredentials('admin')}
+              className="demo-button admin"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={isLoading}
+            >
+              <UserIcon size={16} />
+              Admin Demo
+            </motion.button>
+            <motion.button
+              onClick={() => fillDemoCredentials('user')}
+              className="demo-button user"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              disabled={isLoading}
+            >
+              <UserIcon size={16} />
+              User Demo
+            </motion.button>
+          </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
