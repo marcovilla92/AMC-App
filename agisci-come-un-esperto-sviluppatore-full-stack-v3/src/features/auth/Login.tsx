@@ -16,16 +16,16 @@ async function initializeMockData() {
         id: 'proj-1',
         name: 'Sviluppo App Mobile',
         description: 'Progetto per lo sviluppo della nuova app mobile aziendale',
-        createdBy: 'admin-1',
-        members: ['admin-1', 'user-1'],
+        createdBy: '00000000-0000-0000-0000-000000000001',
+        members: ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'],
         createdAt: new Date().toISOString(),
       },
       {
         id: 'proj-2',
         name: 'Marketing Campaign',
         description: 'Campagna marketing Q1 2024',
-        createdBy: 'admin-1',
-        members: ['admin-1', 'user-1'],
+        createdBy: '00000000-0000-0000-0000-000000000001',
+        members: ['00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'],
         createdAt: new Date().toISOString(),
       },
     ];
@@ -38,22 +38,22 @@ async function initializeMockData() {
       {
         id: 'msg-1',
         projectId: 'proj-1',
-        senderId: 'admin-1',
-        senderName: 'Admin',
+        senderId: '00000000-0000-0000-0000-000000000001',
+        senderName: 'Admin AMC',
         content: 'Benvenuti nel progetto!',
         type: 'text',
         createdAt: new Date().toISOString(),
-        readBy: ['admin-1'],
+        readBy: ['00000000-0000-0000-0000-000000000001'],
       },
       {
         id: 'msg-2',
         projectId: 'proj-1',
-        senderId: 'user-1',
+        senderId: '00000000-0000-0000-0000-000000000002',
         senderName: 'Mario Rossi',
         content: 'Grazie! Pronto a iniziare.',
         type: 'text',
         createdAt: new Date().toISOString(),
-        readBy: ['user-1'],
+        readBy: ['00000000-0000-0000-0000-000000000002'],
       },
     ];
     await persistence.setItem('messages', JSON.stringify(mockMessages));
@@ -94,17 +94,17 @@ function Login({ onLogin }: LoginProps) {
       };
       onLogin(newUser);
     } else {
-      // Demo login - admin credentials
+      // Demo login - admin credentials (UUID matching Supabase)
       if (email === 'admin@company.com' && password === 'admin123') {
         onLogin({
-          id: 'admin-1',
+          id: '00000000-0000-0000-0000-000000000001',
           email: 'admin@company.com',
-          name: 'Admin',
+          name: 'Admin AMC',
           role: 'admin',
         });
       } else if (email === 'user@company.com' && password === 'user123') {
         onLogin({
-          id: 'user-1',
+          id: '00000000-0000-0000-0000-000000000002',
           email: 'user@company.com',
           name: 'Mario Rossi',
           role: 'user',

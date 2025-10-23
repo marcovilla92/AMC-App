@@ -1,24 +1,65 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './AdminPanel.css';
-import { Project } from '../../types';
+import { Project, User } from '../../types';
+import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 
 interface AdminPanelProps {
   projects: Project[];
   onCreateProject: (name: string, description: string, memberIds: string[]) => void;
+  onBack?: () => void;
 }
 
-function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
+function AdminPanel({ projects, onCreateProject, onBack }: AdminPanelProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    if (!isSupabaseConfigured()) return;
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error('Error loading users:', error);
+      return;
+    }
+
+    const users: User[] = data.map(u => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role as 'admin' | 'user',
+      avatar: u.avatar_url || undefined,
+    }));
+
+    setAvailableUsers(users);
+  };
+
+  const toggleMember = (userId: string) => {
+    setSelectedMembers(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (projectName.trim() && projectDescription.trim()) {
-      onCreateProject(projectName.trim(), projectDescription.trim(), []);
+      onCreateProject(projectName.trim(), projectDescription.trim(), selectedMembers);
       setProjectName('');
       setProjectDescription('');
+      setSelectedMembers([]);
       setIsCreating(false);
     }
   };
@@ -35,6 +76,11 @@ function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
   return (
     <div className="admin-panel">
       <div className="admin-header">
+        {onBack && (
+          <button className="back-button-admin" onClick={onBack} title="Indietro">
+            ←
+          </button>
+        )}
         <h2>⚙️ Pannello Amministratore</h2>
         <button
           className="create-project-button"
@@ -66,6 +112,43 @@ function AdminPanel({ projects, onCreateProject }: AdminPanelProps) {
               rows={3}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label>Membri del Team ({selectedMembers.length} selezionati)</label>
+            <p className="helper-text">Seleziona gli utenti da aggiungere al progetto. L'admin viene aggiunto automaticamente.</p>
+            <div className="members-selection">
+              {availableUsers.length === 0 ? (
+                <p className="no-users">Caricamento utenti...</p>
+              ) : (
+                availableUsers.map(user => (
+                  <div
+                    key={user.id}
+                    className={`member-checkbox ${selectedMembers.includes(user.id) ? 'selected' : ''}`}
+                    onClick={() => toggleMember(user.id)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedMembers.includes(user.id)}
+                      onChange={() => {}}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <div className="member-info">
+                      <div className="member-avatar">
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="member-details">
+                        <span className="member-name">{user.name}</span>
+                        <span className="member-email">{user.email}</span>
+                      </div>
+                      <span className={`member-role-badge ${user.role}`}>
+                        {user.role === 'admin' ? '👑' : '👤'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           <button type="submit" className="submit-button">

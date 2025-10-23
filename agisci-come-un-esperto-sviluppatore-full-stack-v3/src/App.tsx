@@ -5,6 +5,7 @@ import Login from './features/auth/Login';
 import ChatContainer from './features/chat/ChatContainer';
 import { User, Project } from './types';
 import { persistence } from './utils/persistence';
+import { notificationService } from './services/notifications';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -12,7 +13,19 @@ function App() {
 
   useEffect(() => {
     checkAuth();
+    initNotifications();
   }, []);
+
+  const initNotifications = async () => {
+    const granted = await notificationService.init();
+    if (granted) {
+      console.log('🔔 Notifiche push abilitate');
+      // Test notifica dopo 2 secondi
+      setTimeout(() => {
+        notificationService.testNotification();
+      }, 2000);
+    }
+  };
 
   const checkAuth = async () => {
     const userJson = await persistence.getItem('currentUser');

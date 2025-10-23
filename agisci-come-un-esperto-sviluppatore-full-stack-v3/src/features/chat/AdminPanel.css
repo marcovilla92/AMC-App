@@ -9,17 +9,40 @@
 
 .admin-header {
   padding: 20px 24px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
+  background: #075E54;
+  color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+}
+
+.back-button-admin {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.back-button-admin:hover {
+  transform: scale(1.1);
+}
+
+.back-button-admin:active {
+  transform: scale(0.95);
 }
 
 .admin-header h2 {
   margin: 0;
   font-size: 20px;
-  color: #333;
+  color: white;
+  flex: 1;
 }
 
 .create-project-button {
@@ -73,6 +96,115 @@
 .form-group textarea:focus {
   outline: none;
   border-color: #667eea;
+}
+
+.helper-text {
+  font-size: 13px;
+  color: #666;
+  margin: 4px 0 12px 0;
+  line-height: 1.4;
+}
+
+.members-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.no-users {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+.member-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 12px;
+}
+
+.member-checkbox:hover {
+  border-color: #667eea;
+  transform: translateX(4px);
+}
+
+.member-checkbox.selected {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.member-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.member-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.member-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+.member-email {
+  font-size: 13px;
+  color: #666;
+}
+
+.member-role-badge {
+  font-size: 18px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.member-role-badge.admin {
+  background: #fff3cd;
+}
+
+.member-role-badge.user {
+  background: #d1ecf1;
 }
 
 .submit-button {

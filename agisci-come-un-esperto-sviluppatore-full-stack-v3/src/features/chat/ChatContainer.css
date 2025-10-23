@@ -3,13 +3,21 @@
   width: 100%;
   height: 100vh;
   display: flex;
-  background: white;
+  background: #ffffff;
   overflow: hidden;
+  position: relative;
 }
 
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* Mobile-first: views take full width */
+.chat-container > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* Desktop: side-by-side layout */
+@media (min-width: 768px) {
+  .chat-container {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
 }

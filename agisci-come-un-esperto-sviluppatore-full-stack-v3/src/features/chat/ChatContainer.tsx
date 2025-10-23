@@ -3,10 +3,12 @@ import React, { useState, useEffect } from 'react';
 import './ChatContainer.css';
 import { User, Project, Message } from '../../types';
 import Sidebar from './Sidebar';
+import ProjectsList from './ProjectsList';
 import ChatWindow from './ChatWindow';
 import MediaGallery from './MediaGallery';
 import AdminPanel from './AdminPanel';
-import { persistence } from '../../utils/persistence';
+import { projectsApi, messagesApi, realtimeApi, isUsingSupabase } from '../../services/api';
+import { notificationService } from '../../services/notifications';
 
 interface ChatContainerProps {
   user: User;
@@ -16,122 +18,190 @@ interface ChatContainerProps {
 function ChatContainer({ user, onLogout }: ChatContainerProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [view, setView] = useState<'chat' | 'media' | 'admin'>('chat');
+  const [view, setView] = useState<'projects' | 'chat' | 'media' | 'admin'>('projects');
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
-    loadProjects();
-  }, []);
+    loadData();
+  }, [user.id]);
 
   useEffect(() => {
     if (selectedProject) {
-      loadMessages(selectedProject.id);
+      loadProjectMessages(selectedProject.id);
     }
   }, [selectedProject]);
 
-  const loadProjects = async () => {
-    const projectsJson = await persistence.getItem('projects');
-    if (projectsJson) {
-      const allProjects: Project[] = JSON.parse(projectsJson);
-      // Filter projects where user is a member
-      const userProjects = allProjects.filter(p => 
-        p.members.includes(user.id) || user.role === 'admin'
+  useEffect(() => {
+    // Setup realtime per il progetto selezionato
+    if (selectedProject && isUsingSupabase()) {
+      console.log('🔴 Subscribing to realtime messages for project:', selectedProject.name);
+
+      const unsubscribe = realtimeApi.subscribeToMessages(
+        selectedProject.id,
+        (newMessage) => {
+          console.log('📨 New realtime message received:', newMessage);
+
+          // Aggiungi a allMessages
+          setAllMessages(prev => [...prev, newMessage]);
+
+          // Aggiungi anche a messages se è del progetto corrente
+          if (newMessage.projectId === selectedProject.id) {
+            setMessages(prev => [...prev, newMessage]);
+            console.log('✅ Message added to current chat');
+          }
+
+          // Invia notifica se il messaggio non è dell'utente corrente
+          if (newMessage.senderId !== user.id && notificationService.isSupported()) {
+            const preview = newMessage.type === 'text'
+              ? newMessage.content
+              : newMessage.type === 'image'
+              ? '📷 Foto'
+              : newMessage.type === 'video'
+              ? '🎥 Video'
+              : '📎 File';
+
+            notificationService.notifyNewMessage(
+              newMessage.senderName,
+              selectedProject.name,
+              preview
+            );
+          }
+        }
       );
-      setProjects(userProjects);
-      if (userProjects.length > 0 && !selectedProject) {
-        setSelectedProject(userProjects[0]);
-      }
+
+      return () => {
+        console.log('🔴 Unsubscribing from realtime');
+        unsubscribe();
+      };
+    }
+  }, [selectedProject, user.id]);
+
+  const loadData = async () => {
+    console.log('📦 Loading projects from', isUsingSupabase() ? 'Supabase' : 'localStorage');
+
+    // Load projects
+    const userProjects = await projectsApi.getAll(user.id);
+    setProjects(userProjects);
+
+    if (isUsingSupabase()) {
+      console.log('✅ Loaded', userProjects.length, 'projects from Supabase');
     }
   };
 
-  const loadMessages = async (projectId: string) => {
-    const messagesJson = await persistence.getItem('messages');
-    if (messagesJson) {
-      const allMessages: Message[] = JSON.parse(messagesJson);
-      const projectMessages = allMessages.filter(m => m.projectId === projectId);
-      setMessages(projectMessages.sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      ));
+  const loadProjectMessages = async (projectId: string) => {
+    console.log('💬 Loading messages for project:', projectId);
+
+    const projectMessages = await messagesApi.getByProject(projectId);
+    setMessages(projectMessages);
+    setAllMessages(prev => {
+      // Merge con messaggi esistenti
+      const existing = prev.filter(m => m.projectId !== projectId);
+      return [...existing, ...projectMessages];
+    });
+
+    if (isUsingSupabase()) {
+      console.log('✅ Loaded', projectMessages.length, 'messages from Supabase');
     }
   };
 
   const handleSendMessage = async (content: string, type: Message['type'] = 'text', mediaUrl?: string) => {
     if (!selectedProject) return;
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
+    console.log('📤 Sending message to', isUsingSupabase() ? 'Supabase' : 'localStorage');
+
+    const newMessage = await messagesApi.create({
       projectId: selectedProject.id,
       senderId: user.id,
       senderName: user.name,
       content,
       type,
       mediaUrl,
-      createdAt: new Date().toISOString(),
       readBy: [user.id],
-    };
+    });
 
-    const messagesJson = await persistence.getItem('messages');
-    const allMessages: Message[] = messagesJson ? JSON.parse(messagesJson) : [];
-    allMessages.push(newMessage);
-    await persistence.setItem('messages', JSON.stringify(allMessages));
+    if (newMessage) {
+      console.log('✅ Message sent to Supabase');
+      // Aggiungi subito il messaggio localmente (aggiornamento ottimistico)
+      // Il realtime lo aggiungerà di nuovo ma React lo filtrerà per duplicati
+      setMessages(prev => [...prev, newMessage]);
+      setAllMessages(prev => [...prev, newMessage]);
+    }
+  };
 
-    setMessages(prev => [...prev, newMessage]);
+  const handleSelectProject = (project: Project) => {
+    setSelectedProject(project);
+    setView('chat');
+  };
+
+  const handleBackToProjects = () => {
+    setView('projects');
+    setSelectedProject(null);
+  };
+
+  const handleOpenSettings = () => {
+    setShowSettings(true);
+    setView('admin');
   };
 
   const handleCreateProject = async (name: string, description: string, memberIds: string[]) => {
-    const newProject: Project = {
-      id: Date.now().toString(),
+    console.log('🆕 Creating new project in', isUsingSupabase() ? 'Supabase' : 'localStorage');
+
+    const newProject = await projectsApi.create({
       name,
       description,
       createdBy: user.id,
       members: [user.id, ...memberIds],
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    const projectsJson = await persistence.getItem('projects');
-    const allProjects: Project[] = projectsJson ? JSON.parse(projectsJson) : [];
-    allProjects.push(newProject);
-    await persistence.setItem('projects', JSON.stringify(allProjects));
+    if (newProject) {
+      setProjects(prev => [...prev, newProject]);
 
-    setProjects(prev => [...prev, newProject]);
+      if (isUsingSupabase()) {
+        console.log('✅ Project created in Supabase');
+      }
+    }
   };
 
   return (
     <div className="chat-container">
-      <Sidebar
-        user={user}
-        projects={projects}
-        selectedProject={selectedProject}
-        onSelectProject={setSelectedProject}
-        onLogout={onLogout}
-        view={view}
-        onViewChange={setView}
-      />
+      {/* Mobile-first: mostra solo una view alla volta */}
+      {view === 'projects' && (
+        <ProjectsList
+          user={user}
+          projects={projects}
+          messages={allMessages}
+          onSelectProject={handleSelectProject}
+          onLogout={onLogout}
+          onOpenSettings={handleOpenSettings}
+        />
+      )}
 
-      <div className="main-content">
-        {view === 'chat' && selectedProject && (
-          <ChatWindow
-            project={selectedProject}
-            messages={messages}
-            currentUser={user}
-            onSendMessage={handleSendMessage}
-          />
-        )}
+      {view === 'chat' && selectedProject && (
+        <ChatWindow
+          project={selectedProject}
+          messages={messages}
+          currentUser={user}
+          onSendMessage={handleSendMessage}
+          onBack={handleBackToProjects}
+        />
+      )}
 
-        {view === 'media' && selectedProject && (
-          <MediaGallery
-            project={selectedProject}
-            messages={messages.filter(m => m.type !== 'text')}
-          />
-        )}
+      {view === 'media' && selectedProject && (
+        <MediaGallery
+          project={selectedProject}
+          messages={messages.filter(m => m.type !== 'text')}
+        />
+      )}
 
-        {view === 'admin' && user.role === 'admin' && (
-          <AdminPanel
-            projects={projects}
-            onCreateProject={handleCreateProject}
-          />
-        )}
-      </div>
+      {view === 'admin' && user.role === 'admin' && (
+        <AdminPanel
+          projects={projects}
+          onCreateProject={handleCreateProject}
+          onBack={handleBackToProjects}
+        />
+      )}
     </div>
   );
 }
